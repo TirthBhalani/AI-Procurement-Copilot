@@ -26,6 +26,11 @@ class ProcurementDecision(BaseModel):
     next_step: str
     human_review_required: bool = True
     telemetry: RunTelemetry | None = None
+    execution_mode: str = "rules_only"
+    model_name: str | None = None
+    advisory: dict | None = None
+    warnings: list[str] = Field(default_factory=list)
+    trace: list[dict] = Field(default_factory=list)
 
 
 Architecture = Literal["single", "staged"]
