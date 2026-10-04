@@ -42,16 +42,17 @@ class ModelUnavailable(RuntimeError):
 
 
 def model_settings() -> tuple[str, str, str | None]:
-    provider = os.getenv("MODEL_PROVIDER", "openai").lower()
-    defaults = {"openai": "gpt-4o-mini", "gemini": "gemini-2.5-flash", "ollama": "qwen2.5:7b"}
+    provider = os.getenv("MODEL_PROVIDER", "groq").lower()
+    defaults = {"groq": "openai/gpt-oss-120b", "openai": "gpt-4o-mini", "gemini": "gemini-2.5-flash", "ollama": "qwen2.5:7b"}
     model = os.getenv("MODEL_NAME") or defaults.get(provider, "")
-    key = os.getenv("OPENAI_API_KEY" if provider == "openai" else "GOOGLE_API_KEY")
+    keys = {"groq": "GROQ_API_KEY", "openai": "OPENAI_API_KEY", "gemini": "GOOGLE_API_KEY"}
+    key = os.getenv(keys.get(provider, "GROQ_API_KEY"))
     return provider, model, key
 
 
 def infer(payload: dict, role: str, telemetry: RunTelemetryCounter) -> Advisory:
     provider, model, key = model_settings()
-    if provider not in {"openai", "gemini", "ollama"}:
+    if provider not in {"groq", "openai", "gemini", "ollama"}:
         raise ModelUnavailable("Unsupported MODEL_PROVIDER")
     if provider != "ollama" and not key:
         raise ModelUnavailable("Model key is not configured")
@@ -61,7 +62,21 @@ def infer(payload: dict, role: str, telemetry: RunTelemetryCounter) -> Advisory:
         raise ModelUnavailable("Evidence exceeds the bounded context size")
     telemetry.record_llm_call()
     try:
-        if provider == "openai":
+        if provider == "groq":
+            response = requests.post("https://api.groq.com/openai/v1/chat/completions",
+                headers={"Authorization": "Bearer " + key}, timeout=(5, 45),
+                json={"model": model, "temperature": 0, "max_completion_tokens": 3000,
+                      "reasoning_effort": "low",
+                      "messages": [{"role": "system", "content": SYSTEM + "\nRole: " + role},
+                                   {"role": "user", "content": text}],
+                      "response_format": {"type": "json_schema", "json_schema": {
+                          "name": "procurement_advisory", "strict": True, "schema": schema}}})
+            response.raise_for_status()
+            choice = response.json()["choices"][0]
+            if choice.get("finish_reason") != "stop":
+                raise ValueError("Incomplete model response")
+            content = choice["message"]["content"]
+        elif provider == "openai":
             response = requests.post("https://api.openai.com/v1/responses",
                 headers={"Authorization": "Bearer " + key}, timeout=(5, 45),
                 json={"model": model, "store": False, "max_output_tokens": 1500,
