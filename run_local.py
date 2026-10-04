@@ -10,7 +10,7 @@ import requests
 from dotenv import load_dotenv
 
 ROOT = Path(__file__).resolve().parent
-load_dotenv(ROOT / ".env", override=False)
+load_dotenv(ROOT / ".env", override=False, encoding="utf-8-sig")
 
 
 def start(cmd: list[str]) -> subprocess.Popen:
@@ -79,6 +79,12 @@ def main() -> None:
                         "app.py",
                         "--server.port",
                         "8501",
+                        "--server.address",
+                        "127.0.0.1",
+                        "--server.headless",
+                        "true",
+                        "--browser.gatherUsageStats",
+                        "false",
                     ]
                 )
             )
