@@ -8,6 +8,7 @@ import streamlit as st
 from src.agents import model_settings
 from src.data_access import load_requests, load_employees
 from src.solution import analyze_request
+from src.security import scrub
 
 ROOT = Path(__file__).resolve().parent
 st.set_page_config(page_title="Procurement Request Copilot", layout="wide")
@@ -57,6 +58,7 @@ if source == 'Custom request':
 else:
     submitted = st.button('Analyze request', type='primary')
 
+req = scrub(req)
 fingerprint = json.dumps([req, architecture, mode], sort_keys=True)
 if st.session_state.get('fingerprint') != fingerprint:
     st.session_state.pop('decision', None)
