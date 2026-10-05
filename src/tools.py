@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 from src import data_access as data
 from src.telemetry import RunTelemetryCounter
 from src.vendor_client import get_vendor_risk
+from src.security import scrub
 
 
 class ToolResult(BaseModel):
@@ -100,7 +101,7 @@ def gather(request: dict, telemetry: RunTelemetryCounter) -> EvidencePack:
     for name, tool in TOOLS.items():
         telemetry.record_tool_call(name)
         try:
-            results.append(ToolResult(name=name, ok=True, data=tool(request)))
+            results.append(ToolResult(name=name, ok=True, data=scrub(tool(request))))
         except Exception as exc:
             # Do not log URLs, response bodies, environment values, or credentials.
             results.append(ToolResult(name=name, ok=False, error=type(exc).__name__))

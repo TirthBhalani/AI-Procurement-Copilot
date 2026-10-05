@@ -110,7 +110,7 @@ def apply_rules(pack: EvidencePack) -> ProcurementDecision:
     seats = req.get("user_count")
     if type(seats) is not int or seats <= 0:
         missing.append("Positive integer user/license count")
-    access = normal(req.get("data_access_level"))
+    access = normal(req.get("data_access_level")).replace(" ", "_").replace("-", "_")
     if access not in KNOWN_ACCESS:
         missing.append("Known intended data access level")
     integrations = req.get("requested_integrations")
@@ -163,13 +163,13 @@ def apply_rules(pack: EvidencePack) -> ProcurementDecision:
             evidence("policy_rules", "Internal registry and vendor-risk service disagree; Security must reconcile both sources.", "procurement_policy.md §5")
     sensitive = access in {"source_code", "production_telemetry", "confidential_documents", "employee_pii", "customer_pii", "credentials", "secrets"}
     integration_text = normal(" ".join(integrations))
-    sensitive_integration = any(token in integration_text for token in ("production", "cloud", "git", "repository", "repositories", "credential"))
+    sensitive_integration = bool(re.search(r"\b(production|prod|cloud|aws|azure|gcp|git|github|gitlab|repository|repositories|credentials?)\b", integration_text))
     # Business purpose may reveal sensitive access omitted from the structured field.
     purpose = normal(req.get("business_justification"))
     sensitive_purpose = any(t in purpose for t in ("source code", "customer pii", "employee pii", "confidential", "credentials", "production access"))
     if sensitive or sensitive_integration or sensitive_purpose or access not in KNOWN_ACCESS or internal_state != "current" or external_state != "current" or "conflicting_vendor_evidence" in flags:
         require("Security", "security_review_required", f"Security must review data/integration scope and vendor assessment (internal {internal_state}, external {external_state}).", "5")
-    pii = access in {"employee_pii", "customer_pii"} or any(t in purpose for t in ("customer pii", "employee pii", "personal data"))
+    pii = "pii" in access or any(t in purpose for t in ("customer pii", "employee pii", "personal data", "customer emails", "employee records"))
     cross_region = risk.get("stores_data_outside_region") is True and (sensitive or pii or access not in KNOWN_ACCESS)
     if pii or cross_region:
         require("Privacy", "privacy_review_required", "PII processing or potentially sensitive data stored outside the operating region requires Privacy review.", "6")
@@ -177,7 +177,7 @@ def apply_rules(pack: EvidencePack) -> ProcurementDecision:
     nonstandard = not vendor or normal(vendor["legal_terms_status"]) not in {"approved", "standard"}
     if (new_vendor and cost is not None and cost >= 10000) or nonstandard or cross_region:
         require("Legal", "legal_review_required", "New-vendor spend, nonstandard/unverified terms, or a material cross-region data issue requires Legal review.", "7")
-    if suspicious(json.dumps(req)) or any(suspicious(json.dumps(t.data)) for t in pack.tools if t.name != "policy"):
+    if suspicious(json.dumps(req, default=str)) or any(suspicious(json.dumps(t.data, default=str)) for t in pack.tools if t.name != "policy"):
         flags.append("prompt_injection_detected")
         evidence("policy_rules", "Instruction-like content in business data was ignored; it cannot establish approval.", "procurement_policy.md §9")
     if missing:
