@@ -133,9 +133,19 @@ def validate_advisory(advisory: Advisory, pack: EvidencePack, decision: Procurem
 
 def reason(pack: EvidencePack, decision: ProcurementDecision, architecture: str,
            telemetry: RunTelemetryCounter) -> None:
-    payload = {"request": pack.request, "evidence_pack": pack.model_dump(),
-               "mandatory_controls": decision.model_dump(exclude={"trace", "advisory"}),
-               "numbered_evidence": {i: e.model_dump() for i, e in enumerate(decision.evidence)}}
+    # Employee names, email addresses and reporting records are not model inputs.
+    request_fields = {"product_name", "vendor_name", "category", "annual_cost_usd", "user_count",
+                      "business_justification", "data_access_level", "requested_integrations"}
+    payload = {"dataset_notice": "All companies, products, employees, policies and risk signals are synthetic assessment fixtures. Data-access fields describe proposed use, not actual customer records, source code, credentials or documents.",
+               "request": {k: v for k, v in pack.request.items() if k in request_fields},
+               "policy": pack.result("policy").data.get("text", ""),
+               "approved_catalog": pack.result("catalog").data.get("approved_catalog", []),
+               "vendor_notes": [t.data.get("notes", "") for t in pack.tools if t.name == "vendor_risk"],
+               "mandatory_controls": {"required_approvals": decision.required_approvals,
+                                      "risk_flags": decision.risk_flags,
+                                      "missing_information": decision.missing_information},
+               "numbered_evidence": {i: e.model_dump() for i, e in enumerate(decision.evidence)
+                                     if e.source != "requester_budget" or (e.reference or "").startswith("department_budgets")}}
     analyst = infer(payload, "Single procurement agent" if architecture == "single" else "Evidence analyst", telemetry)
     validate_advisory(analyst, pack, decision)
     decision.trace.append({"stage": "single_agent" if architecture == "single" else "analyst",
