@@ -7,6 +7,7 @@ from src.tools import gather
 from src.rules import apply_rules
 from src.telemetry import RunTelemetryCounter
 from src.agents import ModelUnavailable, reason
+from src.security import scrub
 import os
 
 
@@ -28,9 +29,13 @@ def analyze_request(request: dict, architecture: Architecture = "single", *,
     if mode not in {"auto", "live", "offline"}:
         raise ValueError("COPILOT_MODE must be auto, live, or offline")
     telemetry = RunTelemetryCounter()
-    pack = gather(dict(request), telemetry)
+    safe_request = scrub(dict(request))
+    pack = gather(safe_request, telemetry)
     telemetry.record_tool_call("policy_rules")
     decision = apply_rules(pack)
+    if safe_request != request:
+        decision.warnings.append("Credential-like values were redacted from the request.")
+        decision.risk_flags.append("secret_redacted")
     decision.trace = [{"stage": "evidence", "tools": [t.model_dump() for t in pack.tools]},
                       {"stage": "deterministic_checks", "risk_flags": list(decision.risk_flags)}]
     if mode == "offline":
@@ -40,6 +45,8 @@ def analyze_request(request: dict, architecture: Architecture = "single", *,
             reason(pack, decision, architecture, telemetry)
         except ModelUnavailable as exc:
             if mode == "live":
+                exc.telemetry = RunTelemetry(llm_calls=telemetry.llm_calls, tool_calls=telemetry.tool_calls,
+                                             tool_names=telemetry.tool_names)
                 raise
             decision.warnings.append(str(exc) + "; showing rules-only manual handoff.")
             decision.risk_flags.append("model_unavailable")
