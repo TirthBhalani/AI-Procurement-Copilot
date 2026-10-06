@@ -19,6 +19,7 @@ sys.path.insert(0, str(ROOT))
 
 import requests
 from evals.run_public_evals import evaluate
+from evals.quality import grounded_references
 from run_local import wait_for_api
 from src.agents import model_settings
 from src.contracts import ProcurementDecision
@@ -86,9 +87,12 @@ def main():
                     try:
                         decision = ProcurementDecision.model_validate(analyze_request(req, arch, mode=args.mode).model_dump())
                         failures = evaluate(decision, case['expectations'])
-                        action_ok = case.get('action_contains', '').lower() in decision.recommendation.lower()
+                        public_actions = {'PUB-01':'existing', 'PUB-02':'specialist', 'PUB-03':'specialist',
+                                          'PUB-04':'budget', 'PUB-05':'clarification', 'PUB-06':'clarification'}
+                        expected_action = case.get('action_contains', public_actions.get(case['case_id'], ''))
+                        action_ok = bool(expected_action) and expected_action.lower() in decision.recommendation.lower()
                         forbidden = set(case.get('forbidden_approvals', [])) & set(decision.required_approvals)
-                        refs_ok = bool(decision.evidence) and all(e.source and e.reference for e in decision.evidence)
+                        refs_ok = grounded_references(decision)
                         if not action_ok:
                             failures.append('unexpected next-action label')
                         if forbidden:
@@ -105,7 +109,9 @@ def main():
                         outputs.append(dict(case_id=case['case_id'], architecture=arch, repeat=repeat+1,
                                             request=req, decision=decision.model_dump()))
                     except Exception as exc:
-                        row['failures'] = type(exc).__name__
+                        row['failures'] = str(exc) if type(exc).__name__ == 'ModelUnavailable' else type(exc).__name__
+                        if hasattr(exc, 'telemetry'):
+                            row.update(llm_calls=exc.telemetry.llm_calls, tool_calls=exc.telemetry.tool_calls)
                     row['latency_ms'] = round((time.perf_counter()-started)*1000, 2)
                     rows.append(row)
                     print(f"{'PASS' if row['passed'] else 'FAIL'} {case['case_id']} {arch} {row['latency_ms']:.0f}ms {row['failures']}", flush=True)
