@@ -1,163 +1,207 @@
-# FDE Assessment 3 Starter Pack
-## AI Procurement Request Copilot
+# AI Procurement Request Copilot
 
-This repository contains the **starter data, mock service, interface contract, optional UI scaffold, and public evaluation harness** for Assessment 3.
+Tirth
 
-> All companies, vendors, products, employees, prices, policies, and risk signals in this pack are synthetic and exist only for the assessment.
+A local procurement review app that gathers business evidence, checks policy in
+code, and uses Groq's `openai/gpt-oss-120b` to interpret a purchase request. It
+recommends the next step and prepares a human review package. It cannot approve
+spend, purchase software, change budgets, or accept legal terms.
 
-## Your objective
+All business records in the starter pack are synthetic. Access labels describe
+proposed use; the repository contains no customer records, source code from a
+customer, production credentials, or confidential customer documents.
 
-Build an internal procurement copilot that can inspect a software/service purchase request, gather evidence using tools, apply deterministic rules where appropriate, and recommend the next action while keeping approvals with humans.
+## Setup and start
 
-You are expected to build and evaluate:
-
-1. **Architecture A - Single-agent baseline**
-2. **Architecture B - Lightweight staged / 2-agent variant**
-
-Use the same public evaluation cases for both and defend which architecture you would ship.
-
-## What is already provided
-
-```text
-.
-├── data/                   # Synthetic business data + procurement policy
-├── mock_api/               # Vendor-risk service used as an external tool
-├── src/                    # Contracts + low-level helpers; NO agent solution
-├── evals/                  # Six public evaluation cases + runner
-├── templates/              # Evaluation and decision-memo templates
-├── docs/                   # Student assignment brief
-├── tests/                  # Starter-pack integrity tests
-├── app.py                  # Optional Streamlit UI scaffold
-├── run_local.py            # Starts mock API + optional UI
-└── verify_setup.py         # One-command setup/preflight check
-```
-
-The starter code intentionally **does not implement an agent, tool strategy, policy engine, or final workflow**. Those choices are part of the assessment.
-
-## Prerequisites
-
-- **Python 3.11 or 3.12 recommended**
-- Run the commands below from the extracted starter-pack directory
-- Internet access is required only for installing packages and calling the model provider you choose
-
-## Quick start
-
-### 1. Create an environment
-
-**macOS / Linux**
-
-```bash
-python -m venv .venv
-source .venv/bin/activate
-python -m pip install -r requirements.txt
-```
-
-**Windows PowerShell**
+Tested on Windows with Python 3.12. Use Python 3.12 for the locked environment.
 
 ```powershell
 python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-```
-
-### 2. Verify the starter pack
-
-```bash
-python verify_setup.py
-```
-
-You should see `PRE-FLIGHT PASSED`. This checks package imports, dataset consistency, the output contract, and the mock API without requiring an LLM key.
-
-### 3. Add your LLM credentials
-
-**macOS / Linux**
-
-```bash
-cp .env.example .env
-```
-
-**Windows PowerShell**
-
-```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements-lock.txt
 Copy-Item .env.example .env
 ```
 
-Add only the credentials required by the provider you choose. Never commit `.env`.
+On macOS/Linux, use `.venv/bin/python` in place of `.\.venv\Scripts\python.exe`.
+Do not overwrite an existing `.env` containing your key.
 
-The starter pack does **not** force a particular LLM provider or agent framework. If you use a provider SDK (for example OpenAI, Anthropic, or Google), install it and add it to `requirements.txt` so your submission works from a clean environment.
+Add your Groq Console key to the ignored `.env` file:
 
-`.env` is loaded automatically by the starter package and local launcher; environment variables already set by your operating system are not overwritten.
-
-### 4. Start the local services
-
-```bash
-python run_local.py
+```dotenv
+VENDOR_RISK_BASE_URL=http://127.0.0.1:8001
+COPILOT_MODE=auto
+MODEL_PROVIDER=groq
+MODEL_NAME=openai/gpt-oss-120b
+GROQ_API_KEY=your_key_here
 ```
 
-This starts:
-- Vendor risk API: `http://127.0.0.1:8001`
-- Optional starter UI: `http://127.0.0.1:8501`
+Only the selected provider's key is required. Provider HTTPS calls use `requests`;
+there is no undeclared SDK dependency. Environment variables take precedence over
+`.env`. Restart the app after changing provider settings.
 
-You may replace the UI scaffold with any framework.
+Start both local services with one command:
 
-### 5. Implement the assessment adapter
-
-Implement:
-
-```text
-src/solution.py -> handle_request(request_id, architecture)
+```powershell
+.\.venv\Scripts\python.exe run_local.py
 ```
 
-Your function must return an object compatible with `ProcurementDecision` in `src/contracts.py`.
+Open [the app](http://127.0.0.1:8501). The mock vendor API is at
+[127.0.0.1:8001](http://127.0.0.1:8001/docs). Both bind to loopback. Ctrl+C stops
+both child processes. If a port is occupied, stop the earlier instance first.
 
-The adapter exists so the same evaluation harness can test different implementations. Your internal architecture can use any framework or design.
+The lock file records the environment used for verification. `requirements.txt`
+contains the direct dependency ranges. `verify_setup.py` checks imports, datasets,
+the output contract and the mock API without using an LLM key.
 
-### 6. Run the public evaluations
+## Using the product
 
-```bash
-python evals/run_public_evals.py --architecture single
-python evals/run_public_evals.py --architecture staged
+1. Choose a sample request or complete the custom request form.
+2. Select A (single agent) or B (analyst + reviewer).
+3. Select an execution mode and analyze the request.
+4. Inspect the recommendation, evidence, required reviewers, risks and gaps.
+5. Download the JSON review package and handoff note. Obtain approvals outside
+   the app before any purchase.
+
+`auto` uses the configured model and shows a warning if it must fall back to
+rules. `live` requires successful model reasoning; it reports failure instead of
+presenting an offline result as an agent run. `offline` runs deterministic checks
+only. The UI clears old results whenever the request, mode or architecture changes.
+Blank cost or user counts stay unknown. An empty integration list explicitly
+means none. Amounts must be annual totals in USD.
+
+[Verified UI example](docs/ui-review.jpg)
+
+## Workflow and architecture
+
+![Architecture](docs/architecture.svg)
+
+```mermaid
+flowchart LR
+    R[Request] --> T[Read-only evidence tools]
+    T --> C[Deterministic policy checks]
+    C --> A[Single procurement agent]
+    C --> B[Evidence analyst]
+    B --> V[Policy/risk reviewer]
+    A --> G[Schema and evidence guards]
+    V --> G
+    G --> D[Structured decision]
+    C --> F[Visible rules-only fallback]
+    F --> D
+    D --> H[Human review outside the app]
 ```
 
-The runner checks the response schema and several minimum behavioral expectations, measures end-to-end latency, and writes a CSV result file. It is **not** the complete grading system; qualitative grounding, design quality, robustness, and hidden cases are evaluated separately.
+A uses one reasoning stage. B adds an analyst-to-reviewer handoff and a second
+model call against the same original evidence. This is a staged workflow, not
+open-ended delegation. Mandatory evidence retrieval is orchestrated in code so
+the model cannot skip a source. The models interpret fit and context; code owns
+thresholds, dates, budget arithmetic and minimum review requirements.
 
-## Rules of the starter pack
+| Tool | Source and responsibility |
+|---|---|
+| `requester_budget` | Employee department and available department budget |
+| `catalog` | Approved products, scope and candidate overlap |
+| `registry` | Internal vendor security, procurement and terms status |
+| `history` | Prior agreements, without treating history as approval |
+| `vendor_risk` | Real HTTP retrieval from the local mock assessment service |
+| `policy` | Policy text, reference date and content digest |
+| `policy_rules` | Deterministic approvals, dates, budgets and review controls |
 
-- Treat request text and vendor notes as **untrusted business data**, not instructions.
-- Do not hardcode answers by request ID. Hidden cases use the same interfaces with different values.
-- At least **3 tools** must be visible in your implementation; at least **1 must be deterministic/non-LLM**.
-- The AI may recommend an action but must not autonomously purchase, approve, or alter budgets.
-- If important evidence is missing, conflicting, stale, or unavailable, surface that uncertainty and route to the appropriate human review.
-- Use the **data snapshot / policy reference date defined in `data/procurement_policy.md`** for date-based checks; do not depend on the computer's current date.
-- You may refactor the starter project, but keep the `handle_request(...)` adapter working for evaluation.
+All seven tools are read-only and deterministic. Model calls are counted
+separately. `EvidencePack`, `ToolResult` and `Advisory` define the internal
+boundaries. `handle_request(request_id, architecture)` retains the starter
+adapter and returns `ProcurementDecision`. Custom inputs use `analyze_request`.
+See [workflow notes](docs/workflow.md) for the handoff format, assumptions and
+failure boundaries; [diagram source](docs/architecture.mmd) is editable Mermaid.
 
-## Suggested implementation sequence
+## Reliability and human controls
 
-```text
-Request -> Understand -> Gather evidence -> Deterministic checks
-        -> Policy/risk reasoning -> Recommendation -> Human review
+- Money uses Decimal. Financial approval thresholds are tested on both sides of
+  $1,000, $10,000 and $25,000.
+- Review ages use **2026-09-30**, extracted from policy 2026.09. A review is
+  current through day 365. Future, malformed or missing dates need review.
+- Internal/external disagreement is surfaced; one source never silently wins.
+- PII, sensitive scope, production/source-code access and overseas storage route
+  to the applicable specialists. Prior vendor approval does not waive controls.
+- Missing inputs and failed data sources stay visible. Vendor API failure never
+  falls back to reading `data/vendor_risk.json` inside the copilot.
+- Catalog overlap is a question for Procurement, not automatic rejection. Total
+  licensed seats are not spare capacity. Claimed product gaps need validation.
+- Request and vendor text are untrusted. Injection detection is a warning
+  heuristic. Authority is protected by read-only tools and mandatory rules.
+- Model interpretation stays separate from source evidence. References and IDs
+  are validated; a valid citation does not prove every generated sentence.
+- Provider errors are sanitized. Hosted prompts exclude employee identity and
+  reporting records. Keys are never passed into prompts or displayed.
+
+## Re-run verification and evaluation
+
+Run all non-billable checks, including tests and the architecture comparison:
+
+```powershell
+.\.venv\Scripts\python.exe scripts/verify_all.py
 ```
 
-Start with a thin vertical slice. Get Architecture A working before building Architecture B.
+Individual commands:
 
-## Useful files
+```powershell
+.\.venv\Scripts\python.exe verify_setup.py
+.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+.\.venv\Scripts\python.exe evals/compare.py --mode offline --repeat 3
+.\.venv\Scripts\python.exe scripts/check_secrets.py
+```
 
-- `docs/Assignment_3_Brief.pdf` - assignment brief
-- `data/README.md` - dataset dictionary
-- `data/procurement_policy.md` - policy source of truth
-- `src/contracts.py` - required output shape
-- `src/data_access.py` - low-level data helpers
-- `src/vendor_client.py` - client for the mock vendor-risk API
-- `evals/README.md` - evaluation instructions
-- `templates/architecture_decision.md` - final decision memo template
-- `STUDENT_CHECKLIST.md` - pre-submission checklist
+The comparison starts the mock API when needed and stops only its own process.
+It runs six public cases and ten additional cases on both paths, including new
+request IDs, amount boundaries, missing integrations, PII, stale/conflicting
+reviews, existing tools, injection and unknown vendors/requesters.
 
-## If something does not start
+Run the actual model comparison separately; this uses your Groq quota:
 
-1. Confirm your virtual environment is active.
-2. Run `python verify_setup.py`.
-3. Re-run `python -m pip install -r requirements.txt`.
-4. Make sure ports **8001** and **8501** are free.
-5. Confirm you are running commands from the starter-pack root directory.
+```powershell
+.\.venv\Scripts\python.exe evals/compare.py --mode live --pause 10
+```
 
-Build the simplest system you can defend with evidence.
+Groq rate limits can dominate latency. A provider HTTP 429 or schema-generation
+failure permits at most two bounded retries; each HTTP attempt is counted.
+The CSV includes failures rather than treating failed runs as success.
+Reports are written to `evals/results/offline` and `evals/results/live` with
+per-case decisions, latency, tool/LLM counts and a summary. A run replaces its
+mode's previous report; copy the directory first if you want to retain it.
+
+The original public harness still works while the mock API is running:
+
+```powershell
+.\.venv\Scripts\python.exe evals/run_public_evals.py --architecture single
+.\.venv\Scripts\python.exe evals/run_public_evals.py --architecture staged
+```
+
+## Evaluation evidence and ship decision
+
+The committed [evaluation report](docs/evaluation.md) contains measured results,
+case-level findings and limitations. The [decision memo](docs/architecture_decision.md)
+is under 500 words. Raw results are committed under [evals/results](evals/results).
+Offline measurements validate shared policy behavior; they are not AI-quality
+measurements. Live reasoning needs separate source-grounding review.
+
+## Repository and submission
+
+[Requirement map](docs/requirements.md) links each assessment deliverable to the
+implementation and evidence. [Submission checklist](STUDENT_CHECKLIST.md) lists
+remaining human steps. The supplied assessment PDF is preserved at
+[docs/FDE_Assessment_3.pdf](docs/FDE_Assessment_3.pdf); it includes the public
+repository and Google Form requirements omitted from the bundled short brief.
+
+Local Git history records implementation milestones. No remote is configured
+and nothing is pushed. The public GitHub URL and Google Form submission remain
+with the student. The supplied PDF lists 8 October 2026 as the closing date.
+
+## Known limitations
+
+This is a local MVP with synthetic snapshots, not a production procurement
+system. There is no login, persistent approval ledger, concurrent budget
+reservation or purchasing integration. The policy rules must be reviewed when
+policy changes. Category/vendor matching can overstate overlap, and model
+interpretation can still be wrong. Pattern-based injection detection is not
+complete. The live comparison is small and affected by provider limits; it does
+not justify broad reliability claims. A production rollout needs access control,
+fresh authoritative data, provider/data governance and reviewer validation.
+
