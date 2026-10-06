@@ -1,0 +1,19 @@
+flowchart TB
+    UI["Streamlit: request details and architecture selection"] --> TOOLS["Read-only evidence tools"]
+    TOOLS --> DATA["Requester/budget, catalog, registry, history"]
+    TOOLS --> API["Vendor-risk HTTP API"]
+    TOOLS --> POLICY["Policy 2026.09 and snapshot date"]
+    DATA --> PACK["Typed EvidencePack with success/failure per tool"]
+    API --> PACK
+    POLICY --> PACK
+    PACK --> RULES["Deterministic policy checks: money, dates, approvals, risks"]
+    RULES --> SELECT{"Architecture"}
+    SELECT -->|A| SINGLE["Single procurement agent: interpret fit and cite evidence"]
+    SELECT -->|B| ANALYST["Evidence analyst: structured Advisory"]
+    ANALYST --> REVIEWER["Policy/risk reviewer: verify handoff against original evidence"]
+    SINGLE --> GUARD["Validate schema, citations and catalog IDs; retain mandatory controls"]
+    REVIEWER --> GUARD
+    SELECT -->|Offline or model failure| FALLBACK["Visible rules-only handoff"]
+    FALLBACK --> OUT["ProcurementDecision: recommendation, evidence, approvals, gaps, risks, next step"]
+    GUARD --> OUT
+    OUT --> HUMAN["Human reviewers: approvals and exceptions outside the app"]
