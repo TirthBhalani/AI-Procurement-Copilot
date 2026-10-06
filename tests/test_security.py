@@ -15,6 +15,7 @@ class SecretTests(unittest.TestCase):
         result = scrub({'notes': ['Do not forward ' + secret]})
         self.assertNotIn(secret, json.dumps(result))
         self.assertIn('[REDACTED]', json.dumps(result))
+        self.assertNotIn(secret, json.dumps(scrub({secret: 'accidental key name'})))
 
     def test_exact_configured_key_is_redacted(self):
         with patch.dict(os.environ, {'GROQ_API_KEY':'synthetic-configured-value'}):

@@ -85,10 +85,13 @@ def vendor_risk(request: dict) -> dict:
 def policy(_: dict) -> dict:
     text = data.load_policy_text()
     reference = re.search(r"reference date:\*\*\s*(\d{4}-\d{2}-\d{2})", text)
+    version = re.search(r"\*\*Policy version:\*\*\s*(\S+)", text)
     if not reference:
         raise ValueError("Policy reference date is missing")
+    if not version or version.group(1) != "2026.09":
+        raise ValueError("Policy version needs a reviewed rules update")
     return {"text": text, "reference_date": reference.group(1),
-            "sha256": hashlib.sha256(text.encode()).hexdigest(), "version": "2026.09"}
+            "sha256": hashlib.sha256(text.encode()).hexdigest(), "version": version.group(1)}
 
 
 TOOLS = {"requester_budget": requester_budget, "catalog": catalog,

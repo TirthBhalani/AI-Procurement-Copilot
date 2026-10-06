@@ -7,6 +7,14 @@ Tirth
 The editable source is [architecture.mmd](architecture.mmd). The SVG is rendered
 with Mermaid CLI; GitHub can also render the Mermaid block in the README.
 
+Optional regeneration, with Node.js installed:
+
+```sh
+npx --yes --package @mermaid-js/mermaid-cli mmdc -i docs/architecture.mmd -o docs/architecture.svg -b white
+```
+
+The committed SVG needs no editor extension to display.
+
 ## Request to handoff
 
 1. Select a sample or enter a custom request. Unknown values remain unknown.
@@ -36,8 +44,10 @@ with Mermaid CLI; GitHub can also render the Mermaid block in the README.
 All tools are deterministic/read-only. LLM calls are counted separately from tool
 invocations. The model interprets use-case fit and semantic risk; it does not do
 approval arithmetic. Provider calls are bounded, timed out and schema validated.
-HTTP 429 permits at most two retries using Retry-After (capped at 60 seconds);
-each attempt counts as an LLM call. Other failures are not retried. Auto mode surfaces a rules-only fallback; live mode fails
+HTTP 429 permits retries using Retry-After (capped at 60 seconds); a provider
+schema-generation error also permits a retry. There are at most three attempts
+per stage, and each HTTP attempt counts as an LLM call. Other failures are not
+retried. Auto mode surfaces a rules-only fallback; live mode fails
 the run if either required reasoning stage fails.
 
 ## Handoff contract
@@ -60,8 +70,8 @@ citation index does not prove every generated sentence is factually correct.
 - Cost is the total annualized USD amount, including one-time services as given.
   The UI does not silently convert monthly charges or currencies. Zero-cost
   requests still require the applicable human approval.
-- Policy 2026.09 is implemented in code. A policy change needs a reviewed rules
-  update. Reference date is extracted from the policy; review age 365 days is
+- Policy 2026.09 is implemented in code. An unsupported version stops review and
+  needs a reviewed rules update. Reference date is extracted from the policy; review age 365 days is
   current, 366 days expired. Future or malformed dates require Security review.
 - The employee directory determines department; contradictory input is surfaced.
 - Total licensed seats do not establish unused capacity. Scope and entitlement
@@ -79,6 +89,9 @@ citation index does not prove every generated sentence is factually correct.
   removed by the model, and untrusted text is placed only in the data payload.
 - Hosted model payloads omit employee identity/reporting records. No environment
   values or API keys enter prompts, traces or downloadable packages.
+- Redaction removes configured key values and common API-token patterns from
+  requests, tool outputs and model responses. This is best-effort protection,
+  not a general classifier for arbitrary sensitive data.
 
 ## Deliberate limits
 
