@@ -91,6 +91,37 @@ class AgentTests(unittest.TestCase):
             with self.assertRaises(ModelUnavailable):
                 infer({}, 'test', RunTelemetryCounter())
 
+    def test_rate_limit_retry_counts_each_http_attempt(self):
+        limited = Mock(status_code=429, headers={'retry-after':'1'})
+        success = Mock(status_code=200)
+        success.json.return_value = {'choices':[{'finish_reason':'stop', 'message':{'content':advisory().model_dump_json()}}]}
+        telemetry = RunTelemetryCounter()
+        with patch.dict(os.environ, {'MODEL_PROVIDER':'groq', 'GROQ_API_KEY':'test-secret'}), patch('src.agents.requests.post', side_effect=[limited, success]), patch('src.agents.time.sleep') as pause:
+            infer({}, 'test', telemetry)
+        self.assertEqual(telemetry.llm_calls, 2)
+        pause.assert_called_once()
+
+    def test_schema_generation_retry_is_bounded(self):
+        import requests
+        response = Mock(status_code=400)
+        response.json.return_value = {'error': {'code':'json_validate_failed'}}
+        response.raise_for_status.side_effect = requests.HTTPError(response=response)
+        telemetry = RunTelemetryCounter()
+        with patch.dict(os.environ, {'MODEL_PROVIDER':'groq', 'GROQ_API_KEY':'test-secret'}), patch('src.agents.requests.post', return_value=response):
+            with self.assertRaises(ModelUnavailable):
+                infer({}, 'test', telemetry)
+        self.assertEqual(telemetry.llm_calls, 3)
+
+    def test_model_cannot_invent_cfo_approval(self):
+        with self.assertRaises(ModelUnavailable):
+            self.execute(output=advisory(additional_reviews=['CFO']))
+
+    def test_non_json_evidence_fails_before_provider_call(self):
+        with patch.dict(os.environ, {'MODEL_PROVIDER':'groq', 'GROQ_API_KEY':'test-secret'}), patch('src.agents.requests.post') as post:
+            with self.assertRaises(ModelUnavailable):
+                infer({'bad': float('nan')}, 'test', RunTelemetryCounter())
+            post.assert_not_called()
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -145,7 +145,7 @@ def infer(payload: dict, role: str, telemetry: RunTelemetryCounter) -> Advisory:
     except requests.HTTPError as exc:
         status = exc.response.status_code if exc.response is not None else "unknown"
         raise ModelUnavailable(f"Model HTTP {status}") from None
-    except (requests.RequestException, ValueError, KeyError, IndexError, TypeError):
+    except (requests.RequestException, ValueError, KeyError, IndexError, TypeError, AttributeError):
         # Provider exceptions may contain keys or response bodies. Never forward them.
         raise ModelUnavailable("Model call failed or returned invalid structured output") from None
 

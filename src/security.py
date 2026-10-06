@@ -13,7 +13,7 @@ def scrub(value):
                 value = value.replace(secret, '[REDACTED]')
         return TOKEN.sub('[REDACTED]', value)
     if isinstance(value, dict):
-        return {key: scrub(item) for key, item in value.items()}
+        return {scrub(key): scrub(item) for key, item in value.items()}
     if isinstance(value, list):
         return [scrub(item) for item in value]
     return value

@@ -113,6 +113,13 @@ class PolicyTests(unittest.TestCase):
         self.assertIn('policy_unavailable', result.risk_flags)
         self.assertIn('Hold', result.recommendation)
 
+    def test_changed_policy_version_requires_rules_review(self):
+        from src.data_access import load_policy_text
+        changed = load_policy_text().replace('2026.09', '2027.01')
+        with patch('src.tools.data.load_policy_text', return_value=changed):
+            result = self.run_request(get_request('REQ-1010'))
+        self.assertIn('policy_unavailable', result.risk_flags)
+
     def test_data_source_unavailable_is_not_empty_success(self):
         with patch('src.tools.data.load_software_catalog', side_effect=OSError):
             result = self.run_request(get_request('REQ-1008'))
