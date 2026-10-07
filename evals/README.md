@@ -1,44 +1,53 @@
-# Public evaluation harness
+# Evaluation guide
 
-The six public cases are intentionally visible. Use them to test both architectures while you develop.
+Use `python evals/compare.py --mode offline --repeat 3` for the non-billable
+comparison, or `python evals/compare.py --mode live --pause 10` for Groq reasoning.
+The runner manages a local mock API when one is not already running. It reuses an
+existing service and stops only a process it created.
 
-Run:
+The same six public cases and ten extended cases run on both architectures.
+Extended cases include four unused starter requests and six modified requests
+with new IDs. Expected approvals/actions live in the case definitions, not in
+solution code. The case-set digest lets readers verify that both modes used the
+same cases. Public expectations remain unchanged.
 
-```bash
+## What the checks establish
+
+- Starter schema and minimum approval/risk/missing-information expectations.
+- Expected next-action labels and forbidden approval additions on selected cases.
+- Evidence references resolve to known files/record IDs; catalog product names
+  and available-budget amounts agree with the referenced records.
+- Human review stays required.
+- Live runs actually completed model reasoning; a fallback is a failed live run.
+- End-to-end latency includes tool gathering, model calls and retries. The
+  inter-case `--pause` is outside the timing window.
+- `llm_calls` counts HTTP attempts, including retries. Successful A normally needs
+  one reasoning stage and B two; tools are invoked seven times on both paths.
+
+These checks are not a complete factuality or security proof. They do not grade
+every generated sentence, every possible semantic overlap, or every missing
+policy condition. Unit tests cover deterministic boundaries, malformed inputs,
+API failures, injection, secret redaction and invalid model handoffs. The
+qualitative review in `docs/evaluation.md` considers actual model interpretation.
+
+## Output files
+
+Each mode writes `comparison.csv`, `decisions.json`, and `summary.json` under
+`evals/results/<mode>/`. Reports include failures and use actual run timestamps.
+A run replaces that mode's earlier report. Copy the folder before rerunning if
+you need to preserve a previous experiment.
+
+The supplied public runner remains compatible:
+
+```sh
 python evals/run_public_evals.py --architecture single
 python evals/run_public_evals.py --architecture staged
 ```
 
-The runner:
-- calls `src.solution.handle_request(request_id, architecture)`,
-- validates the `ProcurementDecision` schema,
-- checks a few minimum expectations,
-- measures end-to-end latency,
-- exports a CSV result file.
+It requires the mock API to be running and follows `COPILOT_MODE` from the
+environment. It checks minimum behavior, not complete grading criteria. The
+committed `offline/public_single.csv` and `offline/public_staged.csv` were run
+with `COPILOT_MODE=offline`; they must not be described as model evaluations.
 
-## Important limitations
-
-Passing these checks does **not** guarantee a high score. The assessment also considers:
-- whether evidence is actually grounded in tool outputs,
-- tool/agent boundaries,
-- deterministic vs. probabilistic decisions,
-- failure handling,
-- architecture quality,
-- evaluation reasoning,
-- hidden cases.
-
-Do not tune your implementation to request IDs. Hidden cases use different records and values.
-
-## Comparison
-
-Use the same case set for both architectures. Your final evaluation should include at least:
-
-| Metric | Single | Staged / 2-agent |
-|---|---:|---:|
-| Public cases meeting minimum expectations |  |  |
-| Avg latency (ms) |  |  |
-| Avg LLM calls |  |  |
-| Avg tool calls |  |  |
-| Policy failures found manually |  |  |
-
-The public runner can measure latency. LLM/tool counts must come from your own telemetry or the optional telemetry field in the output contract.
+Read `docs/evaluation.md` for results, failure analysis, measurement limitations
+and the architecture choice. The final memo is in `docs/architecture_decision.md`.
