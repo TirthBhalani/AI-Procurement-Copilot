@@ -27,6 +27,18 @@ class UITests(unittest.TestCase):
         self.assertFalse(app.exception)
         self.assertTrue(any(t.label == 'Annual cost (USD)' for t in app.text_input))
 
+    def test_failed_rerun_does_not_show_a_stale_decision(self):
+        with patch('src.tools.get_vendor_risk', side_effect=risk):
+            app = AppTest.from_file(APP).run(timeout=20)
+            app.sidebar.selectbox[1].select('offline').run()
+            app.button[0].click().run()
+            self.assertIn('decision', app.session_state)
+        with patch('src.solution.analyze_request', side_effect=RuntimeError('do-not-display')):
+            app.button[0].click().run()
+        self.assertNotIn('decision', app.session_state)
+        self.assertTrue(app.error)
+        self.assertNotIn('do-not-display', app.error[0].value)
+
 
 if __name__ == '__main__':
     unittest.main()
