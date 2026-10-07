@@ -122,6 +122,36 @@ class AgentTests(unittest.TestCase):
                 infer({'bad': float('nan')}, 'test', RunTelemetryCounter())
             post.assert_not_called()
 
+    def test_unverified_capacity_claim_is_rejected(self):
+        with self.assertRaisesRegex(ModelUnavailable, 'spare capacity'):
+            self.execute(output=advisory(use_case_summary='Existing software has spare capacity for this purchase.'))
+
+    def test_capacity_question_is_allowed(self):
+        result = self.execute(output=advisory(questions_for_human=['Is there verified spare capacity?']))
+        self.assertEqual(result.execution_mode, 'live_model')
+
+    def test_missing_integrations_cannot_become_none(self):
+        from src.agents import validate_advisory
+        from src.tools import gather
+        from src.rules import apply_rules
+        request = dict(get_request('REQ-1010'))
+        request['requested_integrations'] = None
+        with patch('src.tools.get_vendor_risk', side_effect=risk):
+            pack = gather(request, RunTelemetryCounter())
+        with self.assertRaisesRegex(ModelUnavailable, 'integrations'):
+            validate_advisory(advisory(use_case_summary='Training with no required integrations.'), pack, apply_rules(pack))
+
+    def test_rounded_shortfall_is_rejected(self):
+        from src.agents import validate_advisory
+        from src.tools import gather
+        from src.rules import apply_rules
+        request = dict(get_request('REQ-1010'))
+        request.update(requester_id='E001', annual_cost_usd=25000.01)
+        with patch('src.tools.get_vendor_risk', side_effect=risk):
+            pack = gather(request, RunTelemetryCounter())
+        with self.assertRaisesRegex(ModelUnavailable, 'shortfall'):
+            validate_advisory(advisory(questions_for_human=['Is a $10,000 shortfall approved?']), pack, apply_rules(pack))
+
 
 if __name__ == '__main__':
     unittest.main()
