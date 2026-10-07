@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import time
 from typing import Literal
 
@@ -13,6 +14,7 @@ from src.contracts import ProcurementDecision
 from src.telemetry import RunTelemetryCounter
 from src.tools import EvidencePack
 from src.security import scrub
+from src.rules import amount
 
 
 class Advisory(BaseModel):
@@ -166,6 +168,20 @@ def validate_advisory(advisory: Advisory, pack: EvidencePack, decision: Procurem
             raise ModelUnavailable("Model attempted to invent business approval requirements")
     if len(advisory.questions_for_human) > 8 or len(advisory.additional_reviews) > 8:
         raise ModelUnavailable("Model exceeded the review limit")
+    summary = advisory.use_case_summary.lower()
+    if re.search(r"\b(with|has|have|there is|there are)\b.{0,45}\b(spare|unused|available)\s+(license\s+)?(capacity|seats|licenses)\b", summary):
+        raise ModelUnavailable("Model asserted unverified spare capacity")
+    if not isinstance(pack.request.get("requested_integrations"), list) and re.search(r"\bno (required )?integrations\b", summary):
+        raise ModelUnavailable("Model treated missing integrations as none")
+    budget = pack.result("requester_budget").data.get("budget")
+    cost = amount(pack.request.get("annual_cost_usd"))
+    available = amount(budget.get("available_usd")) if budget else None
+    text = ' '.join([advisory.use_case_summary, *advisory.questions_for_human])
+    for pattern in (r"\$([\d,]+(?:\.\d+)?)\s+(?:budget\s+)?shortfall", r"shortfall\s+(?:of\s+)?\$([\d,]+(?:\.\d+)?)"):
+        for match in re.finditer(pattern, text, re.I):
+            claimed = amount(match.group(1).replace(',', ''))
+            if cost is None or available is None or claimed != cost - available:
+                raise ModelUnavailable("Model misstated the verified budget shortfall")
 
 
 def reason(pack: EvidencePack, decision: ProcurementDecision, architecture: str,
