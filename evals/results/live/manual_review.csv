@@ -1,0 +1,33 @@
+case_id,architecture,correct_next_action,grounded_evidence,policy_followed,human_escalation_correct,latency_ms,llm_calls,tool_calls,notes
+PUB-01,single,True,True,True,True,9022.86,2,7,Reviewed interpretation against synthetic source evidence; no specific defect found.
+PUB-01,staged,True,True,True,True,34741.79,4,7,Reviewed interpretation against synthetic source evidence; no specific defect found.
+PUB-02,single,True,True,True,True,12014.39,2,7,Reviewed interpretation against synthetic source evidence; no specific defect found.
+PUB-02,staged,True,True,True,True,37611.18,4,7,Reviewed interpretation against synthetic source evidence; no specific defect found.
+PUB-03,single,True,True,True,True,12319.52,2,7,Reviewed interpretation against synthetic source evidence; no specific defect found.
+PUB-03,staged,True,True,True,True,34848.93,4,7,Reviewed interpretation against synthetic source evidence; no specific defect found.
+PUB-04,single,True,True,True,True,10094.63,2,7,Reviewed interpretation against synthetic source evidence; no specific defect found.
+PUB-04,staged,True,True,True,True,36465.6,4,7,Reviewed interpretation against synthetic source evidence; no specific defect found.
+PUB-05,single,True,True,True,True,12322.81,2,7,Reviewed interpretation against synthetic source evidence; no specific defect found.
+PUB-05,staged,True,False,True,True,48581.9,4,7,Model summary asserted spare capacity without evidence; final guard rejects.
+PUB-06,single,True,True,True,True,2170.51,1,7,Reviewed interpretation against synthetic source evidence; no specific defect found.
+PUB-06,staged,True,True,True,True,31369.81,4,7,Reviewed interpretation against synthetic source evidence; no specific defect found.
+EXT-01,single,True,True,True,True,12323.15,2,7,Reviewed interpretation against synthetic source evidence; no specific defect found.
+EXT-01,staged,True,True,True,True,35359.59,4,7,Reviewed interpretation against synthetic source evidence; no specific defect found.
+EXT-02,single,True,True,True,True,12118.4,2,7,Reviewed interpretation against synthetic source evidence; no specific defect found.
+EXT-02,staged,True,True,True,True,35064.12,4,7,Reviewed interpretation against synthetic source evidence; no specific defect found.
+EXT-03,single,True,True,True,True,8636.96,2,7,Reviewed interpretation against synthetic source evidence; no specific defect found.
+EXT-03,staged,True,True,True,True,31055.56,4,7,Reviewed interpretation against synthetic source evidence; no specific defect found.
+EXT-04,single,True,True,True,True,12011.89,2,7,Reviewed interpretation against synthetic source evidence; no specific defect found.
+EXT-04,staged,True,True,True,True,36285.73,4,7,Reviewed interpretation against synthetic source evidence; no specific defect found.
+EXT-05,single,True,False,True,True,4742.42,2,7,Model question rounded the verified shortfall by one cent; final guard rejects.
+EXT-05,staged,False,False,not_returned,not_returned,30458.5,4,7,Overlap assessment has no catalog alternative
+EXT-06,single,True,True,True,True,10085.44,2,7,Reviewed interpretation against synthetic source evidence; no specific defect found.
+EXT-06,staged,True,True,True,True,32771.17,4,7,Reviewed interpretation against synthetic source evidence; no specific defect found.
+EXT-07,single,True,True,True,True,7715.49,2,7,Reviewed interpretation against synthetic source evidence; no specific defect found.
+EXT-07,staged,True,True,True,True,33950.87,4,7,Reviewed interpretation against synthetic source evidence; no specific defect found.
+EXT-08,single,True,True,True,True,8920.43,2,7,Reviewed interpretation against synthetic source evidence; no specific defect found.
+EXT-08,staged,True,False,True,True,31895.05,4,7,Model summary inferred no integrations from missing data; final guard rejects.
+EXT-09,single,True,True,True,True,7389.18,2,7,Reviewed interpretation against synthetic source evidence; no specific defect found.
+EXT-09,staged,False,False,not_returned,not_returned,132474.2,5,7,Model HTTP 429
+EXT-10,single,False,False,not_returned,not_returned,123117.99,3,7,Model HTTP 429
+EXT-10,staged,False,False,not_returned,not_returned,123183.4,3,7,Model HTTP 429

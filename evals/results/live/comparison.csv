@@ -1,0 +1,33 @@
+case_id,architecture,repeat,mode,passed,correct_next_action,grounded_references,policy_followed,human_escalation_correct,llm_calls,tool_calls,failures,latency_ms
+PUB-01,single,1,live,True,True,True,True,True,2,7,,9022.86
+PUB-01,staged,1,live,True,True,True,True,True,4,7,,34741.79
+PUB-02,single,1,live,True,True,True,True,True,2,7,,12014.39
+PUB-02,staged,1,live,True,True,True,True,True,4,7,,37611.18
+PUB-03,single,1,live,True,True,True,True,True,2,7,,12319.52
+PUB-03,staged,1,live,True,True,True,True,True,4,7,,34848.93
+PUB-04,single,1,live,True,True,True,True,True,2,7,,10094.63
+PUB-04,staged,1,live,True,True,True,True,True,4,7,,36465.6
+PUB-05,single,1,live,True,True,True,True,True,2,7,,12322.81
+PUB-05,staged,1,live,True,True,True,True,True,4,7,,48581.9
+PUB-06,single,1,live,True,True,True,True,True,1,7,,2170.51
+PUB-06,staged,1,live,True,True,True,True,True,4,7,,31369.81
+EXT-01,single,1,live,True,True,True,True,True,2,7,,12323.15
+EXT-01,staged,1,live,True,True,True,True,True,4,7,,35359.59
+EXT-02,single,1,live,True,True,True,True,True,2,7,,12118.4
+EXT-02,staged,1,live,True,True,True,True,True,4,7,,35064.12
+EXT-03,single,1,live,True,True,True,True,True,2,7,,8636.96
+EXT-03,staged,1,live,True,True,True,True,True,4,7,,31055.56
+EXT-04,single,1,live,True,True,True,True,True,2,7,,12011.89
+EXT-04,staged,1,live,True,True,True,True,True,4,7,,36285.73
+EXT-05,single,1,live,True,True,True,True,True,2,7,,4742.42
+EXT-05,staged,1,live,False,False,False,False,False,4,7,Overlap assessment has no catalog alternative,30458.5
+EXT-06,single,1,live,True,True,True,True,True,2,7,,10085.44
+EXT-06,staged,1,live,True,True,True,True,True,4,7,,32771.17
+EXT-07,single,1,live,True,True,True,True,True,2,7,,7715.49
+EXT-07,staged,1,live,True,True,True,True,True,4,7,,33950.87
+EXT-08,single,1,live,True,True,True,True,True,2,7,,8920.43
+EXT-08,staged,1,live,True,True,True,True,True,4,7,,31895.05
+EXT-09,single,1,live,True,True,True,True,True,2,7,,7389.18
+EXT-09,staged,1,live,False,False,False,False,False,5,7,Model HTTP 429,132474.2
+EXT-10,single,1,live,False,False,False,False,False,3,7,Model HTTP 429,123117.99
+EXT-10,staged,1,live,False,False,False,False,False,3,7,Model HTTP 429,123183.4

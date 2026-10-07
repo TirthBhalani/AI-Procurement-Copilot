@@ -1,0 +1,29 @@
+case_id,architecture,current_guards_pass,failure,model_calls
+PUB-01,single,True,,0
+PUB-01,staged,True,,0
+PUB-02,single,True,,0
+PUB-02,staged,True,,0
+PUB-03,single,True,,0
+PUB-03,staged,True,,0
+PUB-04,single,True,,0
+PUB-04,staged,True,,0
+PUB-05,single,True,,0
+PUB-05,staged,False,Model asserted unverified spare capacity,0
+PUB-06,single,True,,0
+PUB-06,staged,True,,0
+EXT-01,single,True,,0
+EXT-01,staged,True,,0
+EXT-02,single,True,,0
+EXT-02,staged,True,,0
+EXT-03,single,True,,0
+EXT-03,staged,True,,0
+EXT-04,single,True,,0
+EXT-04,staged,True,,0
+EXT-05,single,False,Model misstated the verified budget shortfall,0
+EXT-06,single,True,,0
+EXT-06,staged,True,,0
+EXT-07,single,True,,0
+EXT-07,staged,True,,0
+EXT-08,single,True,,0
+EXT-08,staged,False,Model treated missing integrations as none,0
+EXT-09,single,True,,0
