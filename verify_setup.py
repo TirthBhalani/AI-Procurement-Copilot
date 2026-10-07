@@ -135,14 +135,14 @@ def check_mock_api() -> None:
 
 
 def main() -> None:
-    print("FDE Assessment 3 - starter pack pre-flight\n")
+    print("FDE Assessment 3 - pre-flight\n")
     check_python()
     check_imports()
     check_data()
     check_contract_and_evals()
     check_mock_api()
     print("\nPRE-FLIGHT PASSED")
-    print("Next: copy .env.example to .env, add your model credentials, then run: python run_local.py")
+    print("Next: configure .env if needed, then run: python run_local.py")
 
 
 if __name__ == "__main__":

@@ -18,10 +18,11 @@ Tested on Windows with Python 3.12. Use Python 3.12 for the locked environment.
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements-lock.txt
-Copy-Item .env.example .env
+if (-not (Test-Path .env)) { Copy-Item .env.example .env }
 ```
 
 On macOS/Linux, use `.venv/bin/python` in place of `.\.venv\Scripts\python.exe`.
+Use `cp -n .env.example .env` to create the local configuration there.
 Do not overwrite an existing `.env` containing your key.
 
 Add your Groq Console key to the ignored `.env` file:
@@ -129,6 +130,9 @@ failure boundaries; [diagram source](docs/architecture.mmd) is editable Mermaid.
   heuristic. Authority is protected by read-only tools and mandatory rules.
 - Model interpretation stays separate from source evidence. References and IDs
   are validated; a valid citation does not prove every generated sentence.
+- Content guards reject asserted spare capacity, missing integrations described
+  as none, and an incorrect stated budget shortfall. These are targeted checks,
+  not a complete factuality classifier.
 - Provider errors are sanitized. Hosted prompts exclude employee identity and
   reporting records. Keys are never passed into prompts or displayed.
 
@@ -146,6 +150,7 @@ Individual commands:
 .\.venv\Scripts\python.exe verify_setup.py
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
 .\.venv\Scripts\python.exe evals/compare.py --mode offline --repeat 3
+.\.venv\Scripts\python.exe evals/replay_guards.py
 .\.venv\Scripts\python.exe scripts/check_secrets.py
 ```
 
@@ -175,6 +180,27 @@ The original public harness still works while the mock API is running:
 ```
 
 ## Evaluation evidence and ship decision
+
+Ship **A, the single-agent workflow, in auto mode** for this local MVP. It retains
+the same deterministic controls while using fewer reasoning stages and exposing
+fewer handoff/provider failures. The completed project has 55 automated tests.
+
+| Measured result | Single A | Staged B |
+|---|---:|---:|
+| Offline cases, three repeats | 48/48 | 48/48 |
+| Original live public structural checks | 6/6 | 6/6 |
+| Original live full-set completions | 15/16 | 13/16 |
+| Mean live latency including retries | 16.56 s | 46.63 s |
+| Mean model HTTP attempts | 2.00 | 4.00 |
+| Tool calls | 7 | 7 |
+| Saved completed outputs accepted by final guards | 14/15 | 11/13 |
+
+The live experiment exposed one invalid B handoff and three provider 429
+failures. Manual review found three additional narrative defects, now rejected
+by regression-tested content guards. The final row is a zero-model-call replay
+of saved outputs, not a fresh live run after those guard changes. Raw live
+results remain preserved. Provider limits and a small serial test set prevent
+strong statistical conclusions.
 
 The committed [evaluation report](docs/evaluation.md) contains measured results,
 case-level findings and limitations. The [decision memo](docs/architecture_decision.md)
