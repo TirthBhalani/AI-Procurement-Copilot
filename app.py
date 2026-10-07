@@ -65,6 +65,7 @@ if st.session_state.get('fingerprint') != fingerprint:
     st.session_state['fingerprint'] = fingerprint
 
 if submitted:
+    st.session_state.pop('decision', None)
     try:
         with st.spinner('Gathering evidence and checking policy...'):
             st.session_state['decision'] = analyze_request(req, architecture, mode=mode).model_dump()
@@ -74,11 +75,11 @@ if submitted:
 left, right = st.columns([0.85, 1.15], gap='large')
 with left:
     st.subheader('Request details')
-    st.write('**Product:**', req.get('product_name') or 'Unknown')
-    st.write('**Vendor:**', req.get('vendor_name') or 'Unknown')
-    st.write('**Annual cost (USD):**', req.get('annual_cost_usd') if req.get('annual_cost_usd') is not None else 'Unknown')
-    st.write('**Users/licenses:**', req.get('user_count') or 'Unknown')
-    st.write('**Data access:**', req.get('data_access_level') or 'Unknown')
+    st.text('Product: ' + str(req.get('product_name') or 'Unknown'))
+    st.text('Vendor: ' + str(req.get('vendor_name') or 'Unknown'))
+    st.text('Annual cost (USD): ' + str(req.get('annual_cost_usd') if req.get('annual_cost_usd') is not None else 'Unknown'))
+    st.text('Users/licenses: ' + str(req.get('user_count') or 'Unknown'))
+    st.text('Data access: ' + str(req.get('data_access_level') or 'Unknown'))
     st.text(req.get('business_justification') or 'Business purpose not supplied')
     with st.expander('Full request'):
         st.json(req)
