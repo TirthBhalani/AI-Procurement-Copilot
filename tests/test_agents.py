@@ -14,7 +14,7 @@ from test_rules import risk
 def advisory(**changes):
     payload = dict(use_case_summary='Review training support for Finance.',
                    overlap_assessment='no_obvious_overlap', alternative_ids=[],
-                   evidence_indices=[0, 1], additional_reviews=[],
+                   evidence_indices=[0, 2], additional_reviews=[],
                    questions_for_human=['Confirm the training scope.'])
     payload.update(changes)
     return Advisory(**payload)
@@ -59,6 +59,10 @@ class AgentTests(unittest.TestCase):
     def test_rejects_invalid_evidence_index(self):
         with self.assertRaises(ModelUnavailable):
             self.execute(output=advisory(evidence_indices=[99999]))
+
+    def test_model_cannot_cite_employee_record_withheld_from_prompt(self):
+        with self.assertRaisesRegex(ModelUnavailable, 'ungrounded evidence'):
+            self.execute(output=advisory(evidence_indices=[1]))
 
     def test_rejects_uncited_interpretation(self):
         with self.assertRaises(ModelUnavailable):
@@ -119,6 +123,21 @@ class AgentTests(unittest.TestCase):
             with self.assertRaises(ModelUnavailable):
                 infer({}, 'test', telemetry)
         self.assertEqual(telemetry.llm_calls, 3)
+
+    def test_daily_quota_stops_without_repeating_or_exposing_body(self):
+        import requests
+        response = Mock(status_code=429)
+        response.json.return_value = {'error': {'message': 'Tokens per day limit. Private account test-secret.'}}
+        response.raise_for_status.side_effect = requests.HTTPError(response=response)
+        telemetry = RunTelemetryCounter()
+        with patch.dict(os.environ, {'MODEL_PROVIDER':'groq', 'GROQ_API_KEY':'test-secret'}), patch('src.agents.requests.post', return_value=response) as post, patch('src.agents.time.sleep') as pause:
+            with self.assertRaises(ModelUnavailable) as caught:
+                infer({}, 'test', telemetry)
+        post.assert_called_once()
+        pause.assert_not_called()
+        self.assertEqual(telemetry.llm_calls, 1)
+        self.assertTrue(caught.exception.daily_quota_exhausted)
+        self.assertNotIn('test-secret', str(caught.exception))
 
     def test_model_cannot_invent_cfo_approval(self):
         with self.assertRaises(ModelUnavailable):
