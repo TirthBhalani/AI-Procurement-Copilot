@@ -1,0 +1,32 @@
+{
+  "mode": "live",
+  "model": "openai/gpt-oss-120b",
+  "provider": "groq",
+  "generated_at": "2026-10-11T14:04:43.145974+00:00",
+  "case_set_sha256": "f544a3ccb67772566a8c8eb94aec4c5bbe5476cfe64a238a3e5111f7bd78f271",
+  "distinct_cases": 16,
+  "repeats": 1,
+  "status": "blocked_provider_quota",
+  "planned_runs": 32,
+  "attempted_runs": 1,
+  "architectures": {
+    "single": {
+      "passed": 0,
+      "total": 1,
+      "mean_latency_ms": 629.57,
+      "median_latency_ms": 629.57,
+      "p95_latency_ms": 629.57,
+      "mean_llm_calls": 1,
+      "mean_tool_calls": 7
+    },
+    "staged": {
+      "passed": 0,
+      "total": 0,
+      "mean_latency_ms": null,
+      "median_latency_ms": null,
+      "p95_latency_ms": null,
+      "mean_llm_calls": null,
+      "mean_tool_calls": null
+    }
+  }
+}

@@ -1,0 +1,2 @@
+case_id,architecture,repeat,mode,passed,correct_next_action,grounded_references,policy_followed,human_escalation_correct,llm_calls,tool_calls,failures,latency_ms
+PUB-01,single,1,live,False,False,False,False,False,1,7,Model HTTP 429: daily provider quota exhausted,629.57

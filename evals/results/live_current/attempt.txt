@@ -1,0 +1,25 @@
+Partial current-code live check, 11 October 2026
+
+Captured console output (latencies rounded by the evaluation runner):
+PASS PUB-01 single 1966ms
+PASS PUB-01 staged 4199ms
+PASS PUB-02 single 6914ms
+PASS PUB-02 staged 36911ms
+PASS PUB-03 single 12846ms
+FAIL PUB-03 staged 138272ms Model HTTP 429
+FAIL PUB-04 single 124297ms Model HTTP 429
+
+The run was stopped after Groq explicitly reported its tokens-per-day limit.
+Diagnostic response: limit 200000, used 198697, requested 3040 tokens;
+Retry-After 751 seconds. A small diagnostic request returned HTTP 200, which
+did not establish that a full procurement prompt had sufficient quota.
+
+Five completed checks passed and two failed. This is not a full 16-case
+comparison. No aggregate architecture conclusion is drawn from this partial
+run. The earlier complete experiment remains in ../live/.
+
+This runner version wrote files only at the end, so its in-memory decisions
+were not retained when it was stopped. No advisory bodies or LLM-attempt
+counts are reconstructed here. The runner now checkpoints after every case
+and stops immediately on an explicit daily provider quota error. A subsequent
+run using that behavior is stored separately in ../live_final/.
