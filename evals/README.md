@@ -1,7 +1,8 @@
 # Evaluation guide
 
 Use `python evals/compare.py --mode offline --repeat 3` for the non-billable
-comparison, or `python evals/compare.py --mode live --pause 10` for Groq reasoning.
+comparison, or `python evals/compare.py --mode live --pause 10 --output-dir evals/results/live_rerun`
+for Groq reasoning while preserving earlier evidence.
 The runner manages a local mock API when one is not already running. It reuses an
 existing service and stops only a process it created.
 
@@ -34,8 +35,12 @@ qualitative review in `docs/evaluation.md` considers actual model interpretation
 
 Each mode writes `comparison.csv`, `decisions.json`, and `summary.json` under
 `evals/results/<mode>/`. Reports include failures and use actual run timestamps.
-A run replaces that mode's earlier report. Copy the folder before rerunning if
-you need to preserve a previous experiment.
+A run replaces its output directory's earlier report. Use a new `--output-dir`
+to preserve a previous experiment. Reports are checkpointed after each attempt.
+An explicit daily provider quota error stops the comparison and sets
+`status=blocked_provider_quota`; `attempted_runs` can be smaller than
+`planned_runs`. Exit code 2 signals that blocker. Unattempted cases have no
+latency or pass/fail result. A `running` status also means an incomplete run.
 
 The supplied public runner remains compatible:
 

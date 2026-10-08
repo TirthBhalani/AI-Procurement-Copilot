@@ -49,6 +49,8 @@ schema-generation error also permits a retry. There are at most three attempts
 per stage, and each HTTP attempt counts as an LLM call. Other failures are not
 retried. Auto mode surfaces a rules-only fallback; live mode fails
 the run if either required reasoning stage fails.
+Explicit daily-quota exhaustion is not retried. The evaluation runner saves
+each attempt and stops the comparison with a partial status when that occurs.
 
 ## Handoff contract
 
