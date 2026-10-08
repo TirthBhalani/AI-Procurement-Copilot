@@ -170,7 +170,7 @@ def apply_rules(pack: EvidencePack) -> ProcurementDecision:
     if sensitive or sensitive_integration or sensitive_purpose or access not in KNOWN_ACCESS or internal_state != "current" or external_state != "current" or "conflicting_vendor_evidence" in flags:
         require("Security", "security_review_required", f"Security must review data/integration scope and vendor assessment (internal {internal_state}, external {external_state}).", "5")
     pii = "pii" in access or any(t in purpose for t in ("customer pii", "employee pii", "personal data", "customer emails", "employee records"))
-    cross_region = risk.get("stores_data_outside_region") is True and (sensitive or pii or access not in KNOWN_ACCESS)
+    cross_region = risk.get("stores_data_outside_region") is True and (sensitive or sensitive_purpose or pii or access not in KNOWN_ACCESS)
     if pii or cross_region:
         require("Privacy", "privacy_review_required", "PII processing or potentially sensitive data stored outside the operating region requires Privacy review.", "6")
     new_vendor = not vendor or normal(vendor["procurement_status"]) != "approved"

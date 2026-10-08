@@ -40,6 +40,13 @@ def analyze_request(request: dict, architecture: Architecture = "single", *,
                       {"stage": "deterministic_checks", "risk_flags": list(decision.risk_flags)}]
     if mode == "offline":
         decision.warnings.append("Rules-only run: model reasoning was disabled. This is not a live agent evaluation.")
+    elif "policy_unavailable" in decision.risk_flags:
+        if mode == "live":
+            exc = ModelUnavailable("Policy unavailable; live review cannot proceed")
+            exc.telemetry = RunTelemetry(llm_calls=telemetry.llm_calls, tool_calls=telemetry.tool_calls,
+                                         tool_names=telemetry.tool_names)
+            raise exc
+        decision.warnings.append("Policy unavailable; showing a hold for manual review.")
     elif "policy_unavailable" not in decision.risk_flags:
         try:
             reason(pack, decision, architecture, telemetry)
