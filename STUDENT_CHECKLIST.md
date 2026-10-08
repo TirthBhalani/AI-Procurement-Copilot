@@ -18,7 +18,10 @@ Tirth
 - [x] Same 16 cases attempted on both architectures; failures retained.
 - [x] Raw results, latency, model HTTP attempts and tool counts are committed.
 - [x] Narrative defects are disclosed and rejected by tested final guards/replay.
-- [x] Decision memo is 358 words, below the 500-word limit.
+- [x] 61 automated tests and all 96 offline comparison runs pass after the audit fixes.
+- [x] Current-code live attempt and daily quota blocker are documented separately.
+- [x] Evaluation checkpoints progress and stops on explicit daily quota exhaustion.
+- [x] Decision memo is below the 500-word limit.
 - [x] Mermaid source and rendered diagram verified.
 - [x] Setup, assumptions, known limitations and ship decision documented.
 - [x] Locked dependencies and repeatable verification script supplied.
@@ -29,8 +32,8 @@ Tirth
 
 - [ ] Review the app, report and source; understand the architecture decision.
 - [ ] Optionally rerun the final live comparison with available Groq quota.
-      Preserve the earlier results folder first. Final guards were verified by
-      tests and saved-output replay; a fresh post-guard live result is not claimed.
+      Use a new `--output-dir`. The fresh audit attempt was partial because of
+      daily quota exhaustion; a complete current-code comparison is outstanding.
 - [ ] Create/link the intended public GitHub repository and publish after review.
 - [ ] Verify `.env` is still ignored and run the secret scan before publishing.
 - [ ] Submit the public repository URL through the assessment Google Form.

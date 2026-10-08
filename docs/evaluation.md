@@ -78,7 +78,7 @@ study. The original failed runs are not silently converted into passes.
 
 ## Verification and reproducibility
 
-The project has 55 automated tests covering source integrity, financial/date
+The project has 61 automated tests covering source integrity, financial/date
 boundaries, tool failures, model handoffs, injection, redaction, UI state, evidence
 references and the new narrative guards. The original public harness also passes
 6/6 on both adapters in explicit offline mode. `python scripts/verify_all.py`
@@ -86,9 +86,38 @@ reruns preflight, tests, repeated offline comparison and historical secret scan.
 The one-command launcher was verified with both loopback services healthy.
 
 Raw reports live in `evals/results/offline` and `evals/results/live`. Repeat the
-live command with available Groq quota to test current guards on newly generated
-outputs; preserve the old folder before rerunning. No post-guard fresh live
-comparison is claimed here.
+live command with available Groq quota and a new `--output-dir` to test current
+guards on newly generated outputs without replacing earlier results.
+
+## Current-code audit on 11 October
+
+The fresh attempt passed PUB-01 A/B, PUB-02 A/B and PUB-03 A, then failed
+PUB-03 B and PUB-04 A with HTTP 429. A diagnostic full prompt explicitly returned
+Groq's **tokens-per-day** limit: 200,000 allowed, 198,697 used and 3,040 requested,
+with Retry-After 751 seconds. A tiny probe returned HTTP 200, which did not prove
+there was enough quota for a full evidence pack. This diagnosis applies to the
+audit attempt; it does not retrospectively identify the earlier experiment's
+unspecified quota failures.
+
+The audit attempt was stopped. Its five passing checks and two failures are
+preserved as captured console output in `evals/results/live_current/attempt.txt`.
+Its in-memory advisory bodies were not retained by that runner version, so no
+new qualitative review or complete comparison is claimed from those passes.
+
+The runner now saves reports after every attempt and stops on explicit daily
+quota exhaustion. A subsequent actual run verified that behavior: one HTTP
+attempt, seven tools, a quota failure in 629.57 ms, and a saved
+`blocked_provider_quota` summary with 1/32 planned runs attempted. The other
+31 runs remain unattempted, including all of B. Those files are in
+`evals/results/live_final/`; they are a partial quota check, not an A/B score.
+
+The audit also added tested controls for unavailable policy in live mode,
+invalid policy dates and confidential use mentioned only in purpose text when
+overseas storage is reported. Citation validation now rejects employee records
+withheld from model prompts. All 61 tests and 96 offline comparison runs pass.
+A complete fresh live comparison of the latest code still needs sufficient
+provider quota. The original full experiment and saved-output replay remain
+separate evidence.
 
 ## Decision and limits
 

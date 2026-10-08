@@ -162,15 +162,18 @@ reviews, existing tools, injection and unknown vendors/requesters.
 Run the actual model comparison separately; this uses your Groq quota:
 
 ```powershell
-.\.venv\Scripts\python.exe evals/compare.py --mode live --pause 10
+.\.venv\Scripts\python.exe evals/compare.py --mode live --pause 10 --output-dir evals/results/live_rerun
 ```
 
 Groq rate limits can dominate latency. A provider HTTP 429 or schema-generation
 failure permits at most two bounded retries; each HTTP attempt is counted.
+An explicit daily-quota error is not retried. The comparison stops and marks
+the report partial; unattempted cases are not counted as completed.
 The CSV includes failures rather than treating failed runs as success.
 Reports are written to `evals/results/offline` and `evals/results/live` with
 per-case decisions, latency, tool/LLM counts and a summary. A run replaces its
-mode's previous report; copy the directory first if you want to retain it.
+mode's previous report. Use a new `--output-dir` to retain earlier experiments.
+Progress is saved after each attempt, including failures.
 
 The original public harness still works while the mock API is running:
 
@@ -183,7 +186,7 @@ The original public harness still works while the mock API is running:
 
 Ship **A, the single-agent workflow, in auto mode** for this local MVP. It retains
 the same deterministic controls while using fewer reasoning stages and exposing
-fewer handoff/provider failures. The completed project has 55 automated tests.
+fewer handoff/provider failures. The completed project has 61 automated tests.
 
 | Measured result | Single A | Staged B |
 |---|---:|---:|
@@ -201,6 +204,12 @@ by regression-tested content guards. The final row is a zero-model-call replay
 of saved outputs, not a fresh live run after those guard changes. Raw live
 results remain preserved. Provider limits and a small serial test set prevent
 strong statistical conclusions.
+
+The current-code audit attempted a fresh comparison: five checks passed before
+two HTTP 429 failures, after which Groq confirmed its daily token limit was
+exhausted. A subsequent run verified immediate quota detection and saved a
+partial report. A complete fresh comparison remains blocked by provider quota.
+See [the audit](docs/final_audit.md) and [evaluation details](docs/evaluation.md).
 
 The committed [evaluation report](docs/evaluation.md) contains measured results,
 case-level findings and limitations. The [decision memo](docs/architecture_decision.md)

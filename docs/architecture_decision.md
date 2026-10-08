@@ -36,9 +36,11 @@ separates model interpretation from deterministic controls.
 
 The evaluation is small, partly public and reviewed during development. Live
 runs used one repeat and fixed A-before-B order. Provider limits confound latency.
-The final guards have regression tests and saved-output replay, but need a fresh
-live run with available quota. Pattern-based content and injection guards cannot
-prove general factuality or security.
+The final guards have regression tests and saved-output replay. A fresh audit
+passed five checks before two quota failures; Groq explicitly reported its daily
+token limit. The runner now checkpoints progress and stops on daily exhaustion.
+A complete current-code comparison still needs available quota. Pattern-based
+content and injection guards cannot prove general factuality or security.
 
 Before production, validate with Procurement/Security reviewers and unseen cases;
 add identity/access control, fresh budgets, audit retention and provider governance.
