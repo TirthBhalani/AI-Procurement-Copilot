@@ -120,6 +120,25 @@ class PolicyTests(unittest.TestCase):
             result = self.run_request(get_request('REQ-1010'))
         self.assertIn('policy_unavailable', result.risk_flags)
 
+    def test_invalid_policy_reference_date_requires_manual_review(self):
+        from src.data_access import load_policy_text
+        changed = load_policy_text().replace('2026-09-30', '2026-99-30')
+        with patch('src.tools.data.load_policy_text', return_value=changed):
+            result = self.run_request(get_request('REQ-1010'))
+        self.assertIn('policy_unavailable', result.risk_flags)
+        self.assertIn('Hold', result.recommendation)
+
+    def test_sensitive_purpose_overseas_routes_privacy_and_legal(self):
+        req = dict(get_request('REQ-1010'))
+        req.update(data_access_level='public', business_justification='Analyze confidential documents.')
+        def overseas(name):
+            payload = risk(name)
+            payload['stores_data_outside_region'] = True
+            return payload
+        with patch('src.tools.get_vendor_risk', side_effect=overseas):
+            result = analyze_request(req, mode='offline')
+        self.assertTrue({'Security', 'Privacy', 'Legal'}.issubset(result.required_approvals))
+
     def test_data_source_unavailable_is_not_empty_success(self):
         with patch('src.tools.data.load_software_catalog', side_effect=OSError):
             result = self.run_request(get_request('REQ-1008'))

@@ -77,6 +77,14 @@ class AgentTests(unittest.TestCase):
             with self.assertRaises(ModelUnavailable):
                 analyze_request(get_request('REQ-1010'), mode='live')
 
+    def test_live_policy_failure_stops_before_model_call(self):
+        with patch('src.tools.get_vendor_risk', side_effect=risk), patch('src.tools.data.load_policy_text', side_effect=OSError), patch('src.agents.infer') as model:
+            with self.assertRaisesRegex(ModelUnavailable, 'Policy unavailable') as caught:
+                analyze_request(get_request('REQ-1010'), mode='live')
+        model.assert_not_called()
+        self.assertEqual(caught.exception.telemetry.llm_calls, 0)
+        self.assertEqual(caught.exception.telemetry.tool_calls, 7)
+
     def test_provider_exception_does_not_expose_secret(self):
         import requests
         with patch.dict(os.environ, {'MODEL_PROVIDER':'groq', 'GROQ_API_KEY':'test-secret'}), patch('src.agents.requests.post', side_effect=requests.ConnectionError('test-secret')):

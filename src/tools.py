@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import re
+from datetime import date
 from typing import Any, Callable
 
 from pydantic import BaseModel, Field
@@ -90,6 +91,7 @@ def policy(_: dict) -> dict:
         raise ValueError("Policy reference date is missing")
     if not version or version.group(1) != "2026.09":
         raise ValueError("Policy version needs a reviewed rules update")
+    date.fromisoformat(reference.group(1))
     return {"text": text, "reference_date": reference.group(1),
             "sha256": hashlib.sha256(text.encode()).hexdigest(), "version": version.group(1)}
 
