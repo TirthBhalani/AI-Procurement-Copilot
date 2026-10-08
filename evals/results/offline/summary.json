@@ -2,26 +2,29 @@
   "mode": "offline",
   "model": null,
   "provider": null,
-  "generated_at": "2026-10-11T11:26:03.564754+00:00",
+  "generated_at": "2026-10-11T14:07:35.976801+00:00",
   "case_set_sha256": "f544a3ccb67772566a8c8eb94aec4c5bbe5476cfe64a238a3e5111f7bd78f271",
   "distinct_cases": 16,
   "repeats": 3,
+  "status": "completed",
+  "planned_runs": 96,
+  "attempted_runs": 96,
   "architectures": {
     "single": {
       "passed": 48,
       "total": 48,
-      "mean_latency_ms": 39.79,
-      "median_latency_ms": 39.17,
-      "p95_latency_ms": 56.91,
+      "mean_latency_ms": 37.9,
+      "median_latency_ms": 37.36,
+      "p95_latency_ms": 49.1,
       "mean_llm_calls": 0,
       "mean_tool_calls": 7
     },
     "staged": {
       "passed": 48,
       "total": 48,
-      "mean_latency_ms": 42.81,
-      "median_latency_ms": 42.75,
-      "p95_latency_ms": 62.08,
+      "mean_latency_ms": 41.64,
+      "median_latency_ms": 39.1,
+      "p95_latency_ms": 62.82,
       "mean_llm_calls": 0,
       "mean_tool_calls": 7
     }
