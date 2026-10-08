@@ -62,15 +62,18 @@ def main():
     parser.add_argument('--repeat', type=int, default=1)
     parser.add_argument('--public-only', action='store_true')
     parser.add_argument('--pause', type=float, default=0, help='Seconds between calls for provider rate limits')
+    parser.add_argument('--output-dir', type=Path, help='Separate report directory; defaults to evals/results/<mode>')
     args = parser.parse_args()
     if not 1 <= args.repeat <= 10:
         parser.error('--repeat must be between 1 and 10')
+    if args.pause < 0:
+        parser.error('--pause must be nonnegative')
     paths = [ROOT/'evals/public_cases.json']
     if not args.public_only:
         paths.append(ROOT/'evals/extended_cases.json')
     cases = [case for path in paths for case in json.loads(path.read_text(encoding='utf-8'))]
     case_hash = hashlib.sha256(json.dumps(cases, sort_keys=True).encode()).hexdigest()
-    output = ROOT/'evals'/'results'/args.mode
+    output = args.output_dir or ROOT/'evals'/'results'/args.mode
     output.mkdir(parents=True, exist_ok=True)
     rows, outputs = [], []
     with local_api():
