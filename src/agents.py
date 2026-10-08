@@ -46,7 +46,20 @@ no_obvious_overlap with alternative_ids []. Do not use role suffixes like 'revie
 
 
 class ModelUnavailable(RuntimeError):
-    pass
+    def __init__(self, message: str, *, daily_quota_exhausted: bool = False):
+        super().__init__(message)
+        self.daily_quota_exhausted = daily_quota_exhausted
+
+
+def daily_quota_limited(response) -> bool:
+    if response.status_code != 429:
+        return False
+    try:
+        message = response.json().get("error", {}).get("message", "")
+        return isinstance(message, str) and any(label in message.lower()
+            for label in ("tokens per day", "requests per day"))
+    except (ValueError, AttributeError):
+        return False
 
 
 def model_settings() -> tuple[str, str, str | None]:
@@ -75,6 +88,8 @@ def infer(payload: dict, role: str, telemetry: RunTelemetryCounter) -> Advisory:
         for attempt in range(3):
             telemetry.record_llm_call()
             response = requests.post(*args, **kwargs)
+            if daily_quota_limited(response):
+                return response
             schema_error = False
             if response.status_code == 400:
                 try:
@@ -146,16 +161,25 @@ def infer(payload: dict, role: str, telemetry: RunTelemetryCounter) -> Advisory:
         return Advisory.model_validate(scrub(json.loads(content)))
     except requests.HTTPError as exc:
         status = exc.response.status_code if exc.response is not None else "unknown"
+        if exc.response is not None and daily_quota_limited(exc.response):
+            raise ModelUnavailable(f"Model HTTP {status}: daily provider quota exhausted",
+                                   daily_quota_exhausted=True) from None
         raise ModelUnavailable(f"Model HTTP {status}") from None
     except (requests.RequestException, ValueError, KeyError, IndexError, TypeError, AttributeError):
         # Provider exceptions may contain keys or response bodies. Never forward them.
         raise ModelUnavailable("Model call failed or returned invalid structured output") from None
 
 
+def numbered_evidence(decision: ProcurementDecision) -> dict:
+    return {i: e.model_dump() for i, e in enumerate(decision.evidence)
+            if e.source != "requester_budget" or (e.reference or "").startswith("department_budgets")}
+
+
 def validate_advisory(advisory: Advisory, pack: EvidencePack, decision: ProcurementDecision) -> None:
     catalog = pack.result("catalog").data.get("approved_catalog", [])
     ids = {r["software_id"] for r in catalog}
-    if not advisory.evidence_indices or any(type(i) is not int or i < 0 or i >= len(decision.evidence) for i in advisory.evidence_indices):
+    visible_indices = numbered_evidence(decision)
+    if not advisory.evidence_indices or any(type(i) is not int or i not in visible_indices for i in advisory.evidence_indices):
         raise ModelUnavailable("Model returned ungrounded evidence references")
     if not set(advisory.alternative_ids).issubset(ids):
         raise ModelUnavailable("Model returned an unknown catalog alternative")
@@ -199,8 +223,7 @@ def reason(pack: EvidencePack, decision: ProcurementDecision, architecture: str,
                "mandatory_controls": {"required_approvals": decision.required_approvals,
                                       "risk_flags": decision.risk_flags,
                                       "missing_information": decision.missing_information},
-               "numbered_evidence": {i: e.model_dump() for i, e in enumerate(decision.evidence)
-                                     if e.source != "requester_budget" or (e.reference or "").startswith("department_budgets")}}
+               "numbered_evidence": numbered_evidence(decision)}
     analyst = infer(payload, "Single procurement agent" if architecture == "single" else "Evidence analyst", telemetry)
     validate_advisory(analyst, pack, decision)
     decision.trace.append({"stage": "single_agent" if architecture == "single" else "analyst",
