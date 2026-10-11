@@ -217,15 +217,12 @@ is under 500 words. Raw results are committed under [evals/results](evals/result
 Offline measurements validate shared policy behavior; they are not AI-quality
 measurements. Live reasoning needs separate source-grounding review.
 
-## Repository and submission
+## Project documentation
 
-[Requirement map](docs/requirements.md) links each assessment deliverable to the
-implementation and evidence. The supplied assessment PDF is preserved at
-[docs/FDE_Assessment_3.pdf](docs/FDE_Assessment_3.pdf); it includes the public
-repository and Google Form requirements omitted from the bundled short brief.
-
-
-
+[Requirement map](docs/requirements.md) connects the requirements to the
+implementation and evidence. [Workflow notes](docs/workflow.md) describe the
+architecture and assumptions. [Evaluation results](docs/evaluation.md) and the
+[decision memo](docs/architecture_decision.md) explain the architecture comparison.
 ## Known limitations
 
 This is a local MVP with synthetic snapshots, not a production procurement

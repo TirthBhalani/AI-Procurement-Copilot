@@ -28,10 +28,4 @@ Source: `docs/FDE_Assessment_3.pdf`, pages 1-2, plus the starter policy and cont
 | One-command local start | `python run_local.py` after environment setup |
 | Reproducible checks | `python scripts/verify_all.py`, dependency lock, CI workflow |
 | No secrets; example configuration | Ignored `.env`, `.env.example`, historical secret scan |
-| Public GitHub repository | Available at https://github.com/TirthBhalani/AI-Procurement-Copilot |
-| Google Form with public repo URL | Ready for submission with repository URL |
-
-Scoring emphasis: product/workflow and working vertical slice are represented by
-the UI and real HTTP tool; architecture and reliability by the typed staged
-workflow and deterministic authority; evaluation by shared cases, raw outputs,
-latency/call counts and documented qualitative limitations.
+| Public GitHub repository | [AI Procurement Copilot](https://github.com/TirthBhalani/AI-Procurement-Copilot) |
